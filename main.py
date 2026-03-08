@@ -538,7 +538,7 @@ async def on_shutdown(app):
     except:
         pass
 
-async def main():
+def main():
     app = web.Application()
 
     # webhook handler
