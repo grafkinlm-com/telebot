@@ -11,7 +11,6 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.webhook.aiohttp_server import SimpleWebhookServer, setup_application
 from aiohttp import web
 from urllib.parse import quote
 
@@ -540,37 +539,22 @@ async def on_shutdown(app):
         pass
 
 async def main():
-    """Главная функция"""
-    # Создаём приложение
     app = web.Application()
-    
-    # Настраиваем вебхук
-    webhook_requests_handler = SimpleWebhookServer(
+
+    # webhook handler
+    from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+
+    SimpleRequestHandler(
         dispatcher=dp,
-        bot=bot,
-        prefix="/webhook"
-    )
+        bot=bot
+    ).register(app, path=WEBHOOK_PATH)
+
     setup_application(app, dp, bot=bot)
-    
-    # Обработчики запуска/остановки
+
     app.on_startup.append(on_startup)
     app.on_shutdown.append(on_shutdown)
-    
-    # Запускаем сервер
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, WEBAPP_HOST, WEBAPP_PORT)
-    await site.start()
-    
-    logger.info(f"Сервер запущен на {WEBAPP_HOST}:{WEBAPP_PORT}")
-    
-    # Бесконечный цикл
-    try:
-        await asyncio.Event().wait()
-    except KeyboardInterrupt:
-        logger.info("Получен сигнал завершения")
-    finally:
-        await runner.cleanup()
+
+    web.run_app(app, host=WEBAPP_HOST, port=WEBAPP_PORT)
 
 if __name__ == "__main__":
     asyncio.run(main())
