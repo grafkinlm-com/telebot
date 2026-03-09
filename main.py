@@ -402,11 +402,37 @@ async def polina_reason_received(message: types.Message, state: FSMContext):
 @dp.message(Command("start"))
 async def start_command(message: types.Message):
     """Команда /start"""
-    await message.answer(
-        f"Привет, {message.from_user.first_name}! 👋\n\n"
-        f"Я бот для дегродских развлечений в этом ебаном чате. Выбери функцию:",
-        reply_markup=get_main_keyboard()
-    )
+    user_id = message.from_user.id
+    chat_id = message.chat.id
+    
+    # Если команда в группе (chat_id != user_id)
+    if chat_id != user_id:
+        # Сохраняем ID группы для последующих операций
+        if user_id not in user_data:
+            user_data[user_id] = {}
+        user_data[user_id]['group_chat_id'] = chat_id
+        
+        # Удаляем сообщение /start из группы
+        try:
+            await bot.delete_message(chat_id, message.message_id)
+            logger.info(f"Сообщение /start удалено из группы {chat_id}")
+        except Exception as e:
+            logger.warning(f"Не удалось удалить сообщение /start: {e}")
+        
+        # Отправляем приветствие в ЛС
+        await bot.send_message(
+            user_id,
+            f"Привет, {message.from_user.first_name}! 👋\n\n"
+            f"Я бот для дегродских развлечений в этом ебаном чате. Выбери функцию:",
+            reply_markup=get_main_keyboard()
+        )
+    else:
+        # Если команда в ЛС, просто отправляем меню
+        await message.answer(
+            f"Привет, {message.from_user.first_name}! 👋\n\n"
+            f"Я бот для дегродских развлечений в этом ебаном чате. Выбери функцию:",
+            reply_markup=get_main_keyboard()
+        )
 
 @dp.message(Command("help"))
 async def help_command(message: types.Message):
