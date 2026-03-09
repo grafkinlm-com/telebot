@@ -256,7 +256,7 @@ async def ponos_details_received(message: types.Message, state: FSMContext):
     
     await state.clear()
 
-# ============ ПОРЧА НА ПОНОС ============
+# ============ РЕЖИМ ПОЛИНЫ ============
 
 @dp.callback_query(F.data == "polina")
 async def polina_start(query: types.CallbackQuery, state: FSMContext):
