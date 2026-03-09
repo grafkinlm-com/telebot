@@ -66,7 +66,7 @@ FART_METHODS = [
     "пустил(а) ветра в поле",
     "сыграл(а) симфонию",
     "насмешил(а) портки",
-    "забитбоксил(а) попой",
+    "забитбоксил(а) жопой",
     "хопхэй лалалэйнул(а)"
 ]
 
@@ -173,15 +173,7 @@ async def spin_scapegoat(user_id: int, state: FSMContext):
     # Финальный результат
     scapegoat = random.choice(options)
     
-    # Обновляем сообщение в ЛС
-    await bot.edit_message_text(
-        f"✅ Крайний найден!\n\n**Сегодня в {name} побеждает {scapegoat}**",
-        user_id,
-        spinning_message.message_id,
-        parse_mode="Markdown"
-    )
-    
-    # ✅ ТОЛЬКО финальный результат отправляем в группу
+    # Обновляем сообщение в чат
     if chat_id:
         await bot.send_message(
             chat_id,
