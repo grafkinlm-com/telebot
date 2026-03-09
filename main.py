@@ -317,12 +317,6 @@ async def help_command(message: types.Message):
     await message.answer(help_text, parse_mode="Markdown")
 
 @dp.message()
-async def echo_handler(message: types.Message):
-    """Обработчик остальных сообщений"""
-    await message.answer(
-        "Используй /start для начала или выбери функцию из меню",
-        reply_markup=get_main_keyboard()
-    )
 
 # ============ POLLING ============
 
