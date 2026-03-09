@@ -71,6 +71,7 @@ def get_main_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="👹 Найди крайнего, ёпт", callback_data="scapegoat")],
         [InlineKeyboardButton(text="💩 Порча на понос", callback_data="ponos_order")],
+        [InlineKeyboardButton(text="😎 Режим Полины", callback_data="polina")],
         [InlineKeyboardButton(text="💨 Дать в облака", callback_data="clouds")]
     ])
 
@@ -252,6 +253,70 @@ async def ponos_details_received(message: types.Message, state: FSMContext):
     
     # Отправляем подтверждение в личку
     await message.answer("✅ Порча выполнена! Пост отправлен в чат.")
+    
+    await state.clear()
+
+# ============ ПОРЧА НА ПОНОС ============
+
+@dp.callback_query(F.data == "polina")
+async def polina_start(query: types.CallbackQuery, state: FSMContext):
+    """Кого бы послать нахуй?"""
+    user_id = query.from_user.id
+    await state.set_state(PolinaOrderStates.waiting_victim)
+    
+    await query.message.edit_text(
+        "Введи никнейм, кого хочешь послать:",
+        reply_markup=None
+    )
+    await query.answer()
+
+@dp.message(PolinaOrderStates.waiting_victim)
+async def polina_victim_received(message: types.Message, state: FSMContext):
+    """Получение имени жертвы"""
+    user_id = message.from_user.id
+    
+    if user_id not in user_data:
+        user_data[user_id] = {}
+    
+    user_data[user_id]['polina'] = {
+        'victim': message.text,
+        'chat_id': message.chat.id,
+        'username': message.from_user.username or message.from_user.first_name
+    }
+    
+    await state.set_state(PolinaOrderStates.waiting_reason)
+    await message.answer("Почему он/она послан нахуй? (Введи причину)")
+
+@dp.message(PolinaOrderStates.waiting_reason)
+async def polina_reason_received(message: types.Message, state: FSMContext):
+    """Получение причины"""
+    user_id = message.from_user.id
+    
+    user_data[user_id]['polina']['reason'] = message.text
+    
+    # Формируем пост
+    ponos_data = user_data[user_id]['polina']
+    victim = ponos_data['victim']
+    username = ponos_data['username']
+    chat_id = ponos_data['chat_id']
+    
+    # Формируем текст с @username
+    username_mention = f"@{username}" if not username.startswith("@") else username
+    
+    post_text = (
+        f"💩 **{victim}, пошёл(ла) нахуй !!"
+        f"потому, что {reason}"
+    )
+    
+    # Отправляем в чат
+    await bot.send_message(
+        chat_id,
+        post_text,
+        parse_mode="Markdown"
+    )
+    
+    # Отправляем подтверждение в личку
+    await message.answer("✅ Пациент послан! Пост отправлен в чат.")
     
     await state.clear()
 
