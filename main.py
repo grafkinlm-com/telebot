@@ -87,7 +87,7 @@ async def scapegoat_start(query: types.CallbackQuery, state: FSMContext):
     if user_id in user_data:
         user_data[user_id].pop('scapegoat', None)
     
-    await query.message.edit_text(
+    await query.message.send_message(
     user_id,
         f"Введи название для рандома",
         reply_markup=None
@@ -163,7 +163,7 @@ async def spin_scapegoat(user_id: int, state: FSMContext):
     
     # Отправляем результат в личку
     await bot.edit_message_text(
-        f"✅ Крайний найден!\n\n**Сегодня в {name} побеждает {scapegoat}**",
+        f"✅ Крайний найден!\n\n**Сегодня в номинации {name} побеждает {scapegoat}**",
         user_id,
         spinning_message.message_id,
         parse_mode="Markdown"
@@ -172,7 +172,7 @@ async def spin_scapegoat(user_id: int, state: FSMContext):
     # Отправляем результат в чат (видят все)
     await bot.send_message(
         chat_id,
-        f"👹 **Сегодня в {name} побеждает {scapegoat}**",
+        f"👹 **Сегодня в номинации {name} побеждает {scapegoat}**",
         parse_mode="Markdown"
     )
     
