@@ -50,6 +50,11 @@ class TrackStates(StatesGroup):
     waiting_artist = State()
     waiting_title = State()
 
+# Состояния для Режима Полины
+class PolinaStates(StatesGroup):
+    waiting_username = State()
+    waiting_reason = State()
+
 # Хранилище данных для каждого пользователя
 user_data = {}
 
@@ -69,9 +74,10 @@ FART_METHODS = [
 def get_main_keyboard():
     """Возвращает клавиатуру с основными функциями"""
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="👹 Найди крайнего, ёпт", callback_data="scapegoat")],
+        [InlineKeyboardButton(text="👹 Найди крайнего", callback_data="scapegoat")],
         [InlineKeyboardButton(text="💩 Порча на понос", callback_data="ponos_order")],
-        [InlineKeyboardButton(text="💨 Дать в облака", callback_data="clouds")]
+        [InlineKeyboardButton(text="💨 Дать в облака", callback_data="clouds")],
+        [InlineKeyboardButton(text="😈 Режим Полины", callback_data="polina_mode")]
     ])
 
 # ============ НАЙДИ КРАЙНЕГО ============
@@ -103,11 +109,10 @@ async def scapegoat_name_received(message: types.Message, state: FSMContext):
     user_data[user_id]['scapegoat'] = {
         'name': message.text,
         'options': [],
-        'chat_id': message.chat.id  # Сохраняем chat_id для отправки финального результата в чат
+        'chat_id': message.chat.id
     }
     
     await state.set_state(ScapegoatStates.waiting_options)
-    # Отправляем в ЛС пользователю
     await message.answer(
         "Введи варианты через запятую (например: Вася, Петя, Маша):"
     )
@@ -122,7 +127,6 @@ async def scapegoat_options_received(message: types.Message, state: FSMContext):
     options = [opt.strip() for opt in text.split(',') if opt.strip()]
     
     if not options:
-        # Отправляем ошибку в ЛС
         await message.answer("Введи хотя бы один вариант!")
         return
     
@@ -138,20 +142,20 @@ async def spin_scapegoat(user_id: int, state: FSMContext):
     options = scapegoat_data['options']
     chat_id = scapegoat_data['chat_id']
     
-    # Отправляем счётчик в ЛС пользователю (не в чат!)
+    # Отправляем в личку счётчик
     spinning_message = await bot.send_message(
-        user_id,  # ✅ Отправляем в ЛС
+        user_id,
         "👹 Ищем крайнего...\n\n" + "\n".join([f"{i+1}. {opt}" for i, opt in enumerate(options)])
     )
     
-    # Имитируем прокрутку - редактируем сообщение в ЛС
+    # Имитируем прокрутку
     for i in range(10):
         await asyncio.sleep(0.3)
         random_option = random.choice(options)
         try:
             await bot.edit_message_text(
                 f"👹 Ищем крайнего...\n\n**Сейчас выбирается: {random_option}**",
-                user_id,  # ✅ Редактируем в ЛС
+                user_id,
                 spinning_message.message_id,
                 parse_mode="Markdown"
             )
@@ -161,17 +165,17 @@ async def spin_scapegoat(user_id: int, state: FSMContext):
     # Финальный результат
     scapegoat = random.choice(options)
     
-    # Обновляем статус в ЛС
+    # Отправляем результат в личку
     await bot.edit_message_text(
         f"✅ Крайний найден!\n\n**Сегодня в {name} побеждает {scapegoat}**",
-        user_id,  # ✅ Обновляем в ЛС
+        user_id,
         spinning_message.message_id,
         parse_mode="Markdown"
     )
     
-    # ✅ ТОЛЬКО ФИНАЛЬНЫЙ РЕЗУЛЬТАТ отправляем в общий чат
+    # Отправляем результат в чат (видят все)
     await bot.send_message(
-        chat_id,  # Отправляем в общий чат
+        chat_id,
         f"👹 **Сегодня в {name} побеждает {scapegoat}**",
         parse_mode="Markdown"
     )
@@ -293,7 +297,261 @@ async def clouds_username_received(message: types.Message, state: FSMContext):
     await message.answer("✅ Пост отправлен в чат!")
     
     await state.clear()
+
+# ============ РЕЖИМ ПОЛИНЫ ============
+
+@dp.callback_query(F.data == "polina_mode")
+async def polina_mode_start(query: types.CallbackQuery, state: FSMContext):
+    """Начало Режима Полины"""
+    user_id = query.from_user.id
+    await state.set_state(PolinaStates.waiting_username)
     
+    # Очищаем старые данные
+    if user_id in user_data:
+        user_data[user_id].pop('polina', None)
+    
+    await query.message.edit_text(
+        "Кого бы послать нахуй?🤔",
+        reply_markup=None
+    )
+    await query.answer()
+
+@dp.message(PolinaStates.waiting_username)
+async def polina_username_received(message: types.Message, state: FSMContext):
+    """Получение юзернейма"""
+    user_id = message.from_user.id
+    
+    if user_id not in user_data:
+        user_data[user_id] = {}
+    
+    user_data[user_id]['polina'] = {
+        'username': message.text,
+        'chat_id': message.chat.id
+    }
+    
+    await state.set_state(PolinaStates.waiting_reason)
+    await message.answer("Введи причину:")
+
+@dp.message(PolinaStates.waiting_reason)
+async def polina_reason_received(message: types.Message, state: FSMContext):
+    """Получение причины и отправка в чат"""
+    user_id = message.from_user.id
+    
+    user_data[user_id]['polina']['reason'] = message.text
+    
+    # Формируем данные
+    polina_data = user_data[user_id]['polina']
+    username = polina_data['username']
+    reason = polina_data['reason']
+    chat_id = polina_data['chat_id']
+    
+    # Форматируем юзернейм (добавляем @ если его нет)
+    username_mention = f"@{username}" if not username.startswith("@") else username
+    
+    # Формируем сообщение
+    post_text = f"**{username_mention}** иди нахуй !! потому что *{reason}*"
+    
+    # Отправляем в чат
+    await bot.send_message(
+        chat_id,
+        post_text,
+        parse_mode="Markdown"
+    )
+    
+    # Отправляем подтверждение в личку
+    await message.answer("✅ Послание отправлено в чат!")
+    
+    await state.clear()
+
+# ============ СКАЧАЙ ТРЕК ============
+
+async def search_track_on_hitmotop(artist: str, title: str) -> str:
+    """Поиск трека на rus.hitmotop.com"""
+    try:
+        # Формируем поисковый запрос
+        search_query = f"{artist} {title}".strip()
+        search_url = f"https://rus.hitmotop.com/search?q={quote(search_query)}"
+        
+        logger.info(f"Ищу трек: {search_query}")
+        
+        # Делаем запрос
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+        response = requests.get(search_url, headers=headers, timeout=10)
+        response.encoding = 'utf-8'
+        
+        if response.status_code != 200:
+            logger.error(f"Ошибка при поиске: {response.status_code}")
+            return None
+        
+        # Парсим HTML
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Ищем ссылку на трек
+        track_links = soup.find_all('a', href=True)
+        
+        for link in track_links:
+            href = link.get('href', '')
+            if href.endswith('.mp3') or '/download/' in href:
+                # Если это относительная ссылка, добавляем домен
+                if href.startswith('/'):
+                    download_url = f"https://rus.hitmotop.com{href}"
+                elif not href.startswith('http'):
+                    download_url = f"https://rus.hitmotop.com/{href}"
+                else:
+                    download_url = href
+                
+                logger.info(f"Найдена ссылка: {download_url}")
+                return download_url
+        
+        logger.warning("Трек не найден на сайте")
+        return None
+        
+    except Exception as e:
+        logger.error(f"Ошибка при поиске трека: {e}")
+        return None
+
+def download_track(download_url: str, artist: str, title: str) -> str:
+    """Скачивание трека"""
+    try:
+        logger.info(f"Скачиваю трек с {download_url}")
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+        response = requests.get(download_url, headers=headers, timeout=30)
+        
+        if response.status_code != 200:
+            logger.error(f"Ошибка при загрузке: {response.status_code}")
+            return None
+        
+        # Формируем имя файла
+        filename = f"{artist} - {title}.mp3"
+        # Очищаем имя файла от недопустимых символов
+        filename = "".join(c for c in filename if c.isalnum() or c in (' ', '-', '_', '.'))
+        
+        filepath = DOWNLOADS_FOLDER / filename
+        
+        # Сохраняем файл
+        with open(filepath, 'wb') as f:
+            f.write(response.content)
+        
+        logger.info(f"Трек скачан: {filepath}")
+        return str(filepath)
+        
+    except Exception as e:
+        logger.error(f"Ошибка при скачивании: {e}")
+        return None
+
+@dp.callback_query(F.data == "download_track")
+async def download_track_start(query: types.CallbackQuery, state: FSMContext):
+    """Начало скачивания трека"""
+    user_id = query.from_user.id
+    await state.set_state(TrackStates.waiting_artist)
+    
+    await query.message.edit_text(
+        "Введи имя исполнителя:",
+        reply_markup=None
+    )
+    await query.answer()
+
+@dp.message(TrackStates.waiting_artist)
+async def track_artist_received(message: types.Message, state: FSMContext):
+    """Получение исполнителя"""
+    user_id = message.from_user.id
+    
+    if user_id not in user_data:
+        user_data[user_id] = {}
+    
+    user_data[user_id]['track'] = {
+        'artist': message.text,
+        'chat_id': message.chat.id
+    }
+    
+    await state.set_state(TrackStates.waiting_title)
+    await message.answer("Введи название трека:")
+
+@dp.message(TrackStates.waiting_title)
+async def track_title_received(message: types.Message, state: FSMContext):
+    """Получение названия трека и скачивание"""
+    user_id = message.from_user.id
+    
+    user_data[user_id]['track']['title'] = message.text
+    
+    track_data = user_data[user_id]['track']
+    artist = track_data['artist']
+    title = track_data['title']
+    chat_id = track_data['chat_id']
+    
+    # Отправляем сообщение о начале поиска
+    status_msg = await message.answer(f"🔍 Ищу трек '{artist} - {title}'...")
+    
+    try:
+        # Ищем трек
+        download_url = search_track_on_hitmotop(artist, title)
+        
+        if not download_url:
+            await bot.edit_message_text(
+                f"❌ Трек '{artist} - {title}' не найден на сайте",
+                user_id,
+                status_msg.message_id
+            )
+            await state.clear()
+            return
+        
+        # Обновляем статус
+        await bot.edit_message_text(
+            f"⬇️ Скачиваю трек '{artist} - {title}'...",
+            user_id,
+            status_msg.message_id
+        )
+        
+        # Скачиваем трек
+        filepath = download_track(download_url, artist, title)
+        
+        if not filepath or not os.path.exists(filepath):
+            await bot.edit_message_text(
+                f"❌ Ошибка при скачивании трека",
+                user_id,
+                status_msg.message_id
+            )
+            await state.clear()
+            return
+        
+        # Отправляем трек в чат
+        with open(filepath, 'rb') as audio:
+            await bot.send_audio(
+                chat_id,
+                audio,
+                title=title,
+                performer=artist,
+                caption=f"🎵 {artist} - {title}"
+            )
+        
+        # Обновляем статус
+        await bot.edit_message_text(
+            f"✅ Трек '{artist} - {title}' успешно загружен!",
+            user_id,
+            status_msg.message_id
+        )
+        
+        # Удаляем файл после отправки
+        try:
+            os.remove(filepath)
+        except:
+            pass
+        
+    except Exception as e:
+        logger.error(f"Ошибка при скачивании трека: {e}")
+        await bot.edit_message_text(
+            f"❌ Ошибка: {str(e)}",
+            user_id,
+            status_msg.message_id
+        )
+    
+    await state.clear()
+
 # ============ ОСНОВНЫЕ КОМАНДЫ ============
 
 @dp.message(Command("start"))
@@ -310,15 +568,22 @@ async def help_command(message: types.Message):
     """Команда /help"""
     help_text = (
         "📖 **Доступные функции:**\n\n"
-        "👹 **Найди крайнего, ёпт** - создай сеанс и выбери крайнего\n"
+        "👹 **Найди крайнего** - создай сеанс и выбери крайнего\n"
         "💩 **Порча на понос** - напиши смешной пост о ком-то\n"
         "💨 **Дать в облака** - смешной пост о пуке\n"
+        "😈 **Режим Полины** - пошли кого-то нахуй\n"
         "🎵 **Скачай трек** - скачай трек с rus.hitmotop.com\n\n"
         "Используй /start для начала"
     )
     await message.answer(help_text, parse_mode="Markdown")
 
 @dp.message()
+async def echo_handler(message: types.Message):
+    """Обработчик остальных сообщений"""
+    await message.answer(
+        "Используй /start для начала или выбери функцию из меню",
+        reply_markup=get_main_keyboard()
+    )
 
 # ============ POLLING ============
 
