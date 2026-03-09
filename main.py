@@ -78,7 +78,6 @@ def get_main_keyboard():
 
 @dp.callback_query(F.data == "scapegoat")
 async def scapegoat_start(query: types.CallbackQuery, state: FSMContext):
-    user_id,
     """Начало поиска крайнего - запрос названия"""
     user_id = query.from_user.id
     await state.set_state(ScapegoatStates.waiting_name)
@@ -87,9 +86,8 @@ async def scapegoat_start(query: types.CallbackQuery, state: FSMContext):
     if user_id in user_data:
         user_data[user_id].pop('scapegoat', None)
     
-    await query.message.send_message(
-    user_id,
-        f"Введи название для рандома",
+    await query.message.edit_text(
+        "Введи название для сеанса (например: 'Кто крайний?'):",
         reply_markup=None
     )
     await query.answer()
@@ -163,7 +161,7 @@ async def spin_scapegoat(user_id: int, state: FSMContext):
     
     # Отправляем результат в личку
     await bot.edit_message_text(
-        f"✅ Крайний найден!\n\n**Сегодня в номинации {name} побеждает {scapegoat}**",
+        f"✅ Крайний найден!\n\n**Сегодня в {name} побеждает {scapegoat}**",
         user_id,
         spinning_message.message_id,
         parse_mode="Markdown"
@@ -172,7 +170,7 @@ async def spin_scapegoat(user_id: int, state: FSMContext):
     # Отправляем результат в чат (видят все)
     await bot.send_message(
         chat_id,
-        f"👹 **Сегодня в номинации {name} побеждает {scapegoat}**",
+        f"👹 **Сегодня в {name} побеждает {scapegoat}**",
         parse_mode="Markdown"
     )
     
