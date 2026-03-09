@@ -293,7 +293,7 @@ async def clouds_username_received(message: types.Message, state: FSMContext):
     await state.clear()
 # ============ СКАЧАЙ ТРЕК ============
 
-def search_track_on_hitmotop(artist: str, title: str) -> str:
+async def search_track_on_hitmotop(artist: str, title: str) -> str:
     """Поиск трека на rus.hitmotop.com"""
     try:
         # Формируем поисковый запрос
