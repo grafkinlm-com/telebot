@@ -496,10 +496,12 @@ async def start_command(message: types.Message):
 async def help_command(message: types.Message):
     """Команда /help"""
     help_text = (
-        "📖 **Доступные функции:**\n"
+        "📖 **Доступные функции:**\n\n"
         "👹 **Найди крайнего** - создай сеанс и выбери крайнего\n"
         "💩 **Порча на понос** - напиши смешной пост о ком-то\n"
         "💨 **Дать в облака** - смешной пост о пуке\n"
+        "🎵 **Скачай трек** - скачай трек с rus.hitmotop.com\n\n"
+        "Используй /start для начала"
     )
     await message.answer(help_text, parse_mode="Markdown")
 
