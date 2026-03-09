@@ -346,7 +346,7 @@ async def polina_reason_received(message: types.Message, state: FSMContext):
     chat_id = polina_data['chat_id']
     
     # Форматируем юзернейм (добавляем @ если его нет)
-    username_mention = f"@{username}" if not username.startswith("@") else username
+    username_mention = f"{username}" if not username.startswith("@") else username
     
     # Формируем сообщение
     post_text = f"**{username_mention}** иди нахуй !! потому что *{reason}*"
