@@ -11,19 +11,14 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from aiohttp import web
 from urllib.parse import quote
 
 # Логирование
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Переменные окружения для bothost.ru
+# Переменные окружения
 BOT_TOKEN = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
-WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://your-bot-url.bothost.ru")
-WEBHOOK_PATH = "/webhook"
-WEBAPP_HOST = "0.0.0.0"
-WEBAPP_PORT = int(os.getenv("PORT", 8000))
 
 # Папка для загрузок
 DOWNLOADS_FOLDER = Path("downloads")
@@ -519,42 +514,24 @@ async def echo_handler(message: types.Message):
         reply_markup=get_main_keyboard()
     )
 
-# ============ ВЕБХУК ============
+# ============ POLLING ============
 
-async def on_startup(app):
-    """При запуске приложения"""
-    logger.info("Бот запущен на bothost.ru")
+async def main():
+    """Главная функция для запуска бота с polling"""
+    logger.info("Бот запущен с использованием polling")
+    
     try:
-        await bot.set_webhook(url=f"{WEBHOOK_URL}{WEBHOOK_PATH}")
-        logger.info(f"Вебхук установлен: {WEBHOOK_URL}{WEBHOOK_PATH}")
+        # Удаляем вебхук если он был установлен
+        await bot.delete_webhook(drop_pending_updates=True)
+        logger.info("Вебхук удален")
     except Exception as e:
-        logger.error(f"Ошибка при установке вебхука: {e}")
-
-async def on_shutdown(app):
-    """При остановке приложения"""
-    logger.info("Бот остановлен")
-    try:
-        await bot.delete_webhook()
-    except:
-        pass
-
-def main():
-    app = web.Application()
-
-    # webhook handler
-    from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
-
-    SimpleRequestHandler(
-        dispatcher=dp,
-        bot=bot
-    ).register(app, path=WEBHOOK_PATH)
-
-    setup_application(app, dp, bot=bot)
-
-    app.on_startup.append(on_startup)
-    app.on_shutdown.append(on_shutdown)
-
-    web.run_app(app, host=WEBAPP_HOST, port=WEBAPP_PORT)
+        logger.warning(f"Ошибка при удалении вебхука: {e}")
+    
+    # Запускаем polling
+    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Бот остановлен пользователем")
