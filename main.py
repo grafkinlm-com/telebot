@@ -86,11 +86,11 @@ async def scapegoat_start(query: types.CallbackQuery, state: FSMContext):
     if user_id in user_data:
         user_data[user_id].pop('scapegoat', None)
     
-    await query.message.edit_text(
+    await message.message.edit_text(
         "Введи название для сеанса (например: 'Кто крайний?'):",
         reply_markup=None
     )
-    await query.answer()
+    await message.answer()
 
 @dp.message(ScapegoatStates.waiting_name)
 async def scapegoat_name_received(message: types.Message, state: FSMContext):
