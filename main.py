@@ -103,10 +103,11 @@ async def scapegoat_name_received(message: types.Message, state: FSMContext):
     user_data[user_id]['scapegoat'] = {
         'name': message.text,
         'options': [],
-        'chat_id': message.chat.id
+        'chat_id': message.chat.id  # Сохраняем chat_id для отправки финального результата в чат
     }
     
     await state.set_state(ScapegoatStates.waiting_options)
+    # Отправляем в ЛС пользователю
     await message.answer(
         "Введи варианты через запятую (например: Вася, Петя, Маша):"
     )
@@ -121,6 +122,7 @@ async def scapegoat_options_received(message: types.Message, state: FSMContext):
     options = [opt.strip() for opt in text.split(',') if opt.strip()]
     
     if not options:
+        # Отправляем ошибку в ЛС
         await message.answer("Введи хотя бы один вариант!")
         return
     
@@ -136,20 +138,20 @@ async def spin_scapegoat(user_id: int, state: FSMContext):
     options = scapegoat_data['options']
     chat_id = scapegoat_data['chat_id']
     
-    # Отправляем в личку счётчик
+    # Отправляем счётчик в ЛС пользователю (не в чат!)
     spinning_message = await bot.send_message(
-        user_id,
+        user_id,  # ✅ Отправляем в ЛС
         "👹 Ищем крайнего...\n\n" + "\n".join([f"{i+1}. {opt}" for i, opt in enumerate(options)])
     )
     
-    # Имитируем прокрутку
+    # Имитируем прокрутку - редактируем сообщение в ЛС
     for i in range(10):
         await asyncio.sleep(0.3)
         random_option = random.choice(options)
         try:
             await bot.edit_message_text(
                 f"👹 Ищем крайнего...\n\n**Сейчас выбирается: {random_option}**",
-                user_id,
+                user_id,  # ✅ Редактируем в ЛС
                 spinning_message.message_id,
                 parse_mode="Markdown"
             )
@@ -159,17 +161,17 @@ async def spin_scapegoat(user_id: int, state: FSMContext):
     # Финальный результат
     scapegoat = random.choice(options)
     
-    # Отправляем результат в личку
+    # Обновляем статус в ЛС
     await bot.edit_message_text(
         f"✅ Крайний найден!\n\n**Сегодня в {name} побеждает {scapegoat}**",
-        user_id,
+        user_id,  # ✅ Обновляем в ЛС
         spinning_message.message_id,
         parse_mode="Markdown"
     )
     
-    # Отправляем результат в чат (видят все)
+    # ✅ ТОЛЬКО ФИНАЛЬНЫЙ РЕЗУЛЬТАТ отправляем в общий чат
     await bot.send_message(
-        chat_id,
+        chat_id,  # Отправляем в общий чат
         f"👹 **Сегодня в {name} побеждает {scapegoat}**",
         parse_mode="Markdown"
     )
