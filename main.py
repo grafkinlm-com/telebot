@@ -78,6 +78,7 @@ def get_main_keyboard():
 
 @dp.callback_query(F.data == "scapegoat")
 async def scapegoat_start(query: types.CallbackQuery, state: FSMContext):
+    user_id,
     """Начало поиска крайнего - запрос названия"""
     user_id = query.from_user.id
     await state.set_state(ScapegoatStates.waiting_name)
@@ -87,7 +88,8 @@ async def scapegoat_start(query: types.CallbackQuery, state: FSMContext):
         user_data[user_id].pop('scapegoat', None)
     
     await query.message.edit_text(
-        "Введи название для сеанса (например: 'Кто крайний?'):",
+    user_id,
+        f"Введи название для рандома",
         reply_markup=None
     )
     await query.answer()
@@ -498,8 +500,7 @@ async def help_command(message: types.Message):
         "👹 **Найди крайнего** - создай сеанс и выбери крайнего\n"
         "💩 **Порча на понос** - напиши смешной пост о ком-то\n"
         "💨 **Дать в облака** - смешной пост о пуке\n"
-        "🎵 **Скачай трек** - скачай трек с rus.hitmotop.com\n\n"
-        "Используй /start для начала"
+а
     )
     await message.answer(help_text, parse_mode="Markdown")
 
