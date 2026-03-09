@@ -69,7 +69,7 @@ FART_METHODS = [
 def get_main_keyboard():
     """Возвращает клавиатуру с основными функциями"""
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="👹 Найди крайнего", callback_data="scapegoat")],
+        [InlineKeyboardButton(text="👹 Найди крайнего, ёпт", callback_data="scapegoat")],
         [InlineKeyboardButton(text="💩 Порча на понос", callback_data="ponos_order")],
         [InlineKeyboardButton(text="💨 Дать в облака", callback_data="clouds")]
     ])
