@@ -404,7 +404,7 @@ async def start_command(message: types.Message):
     """Команда /start"""
     await message.answer(
         f"Привет, {message.from_user.first_name}! 👋\n\n"
-        f"Я бот для дегродских развлечений в этом сраном чате. Выбери функцию:",
+        f"Я бот для дегродских развлечений в этом ебаном чате. Выбери функцию:",
         reply_markup=get_main_keyboard()
     )
 
