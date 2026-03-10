@@ -6,7 +6,27 @@ def install_pymorphy3():
     try:
         import pymorphy3
         print("pymorphy3 уже установлен.")
+    except ImportError:import subprocess
+import sys
+
+def install_pymorphy3():
+    """Устанавливает pymorphy3 и словари, если они не установлены."""
+    try:
+        import pymorphy3
+        print("pymorphy3 уже установлен.")
     except ImportError:
+        print("Устанавливаю pymorphy3 и словари...")
+        subprocess.check_call([
+            sys.executable, "-m", "pip", "install",
+            "pymorphy3", "pymorphy3-dicts-ru"
+        ])
+        print("Установка завершена.")
+
+# Вызываем функцию установки перед остальной логикой
+install_pymorphy3()
+
+# Теперь импортируем библиотеку
+import pymorphy3
         print("Устанавливаю pymorphy3 и словари...")
         subprocess.check_call([
             sys.executable, "-m", "pip", "install",
@@ -45,7 +65,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Переменные окружения
-BOT_TOKEN = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
+BOT_TOKEN = os.getenv("BOT_TOKEN", "8715681899:AAH7TZase_YoZ4xCtQNGXSqDBk07l277BBw")
 
 # Папка для загрузок
 DOWNLOADS_FOLDER = Path("downloads")
