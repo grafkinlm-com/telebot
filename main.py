@@ -66,7 +66,7 @@ FART_METHODS = [
     "пустил(а) ветра в поле",
     "сыграл(а) симфонию",
     "насмешил(а) портки",
-    "забитбоксил(а) жопой",
+    "забитбоксил(а) попой",
     "хопхэй лалалэйнул(а)"
 ]
 
@@ -86,17 +86,11 @@ def get_main_keyboard():
 async def scapegoat_start(query: types.CallbackQuery, state: FSMContext):
     """Начало поиска крайнего - запрос названия"""
     user_id = query.from_user.id
-    chat_id = query.message.chat.id  # Сохраняем ID группы/чата
     await state.set_state(ScapegoatStates.waiting_name)
     
     # Очищаем старые данные
     if user_id in user_data:
         user_data[user_id].pop('scapegoat', None)
-    
-    # Сохраняем chat_id группы
-    if user_id not in user_data:
-        user_data[user_id] = {}
-    user_data[user_id]['scapegoat_chat_id'] = chat_id
     
     # Отправляем в ЛС пользователю
     await bot.send_message(
@@ -148,7 +142,8 @@ async def spin_scapegoat(user_id: int, state: FSMContext):
     scapegoat_data = user_data[user_id]['scapegoat']
     name = scapegoat_data['name']
     options = scapegoat_data['options']
-    chat_id = user_data[user_id].get('scapegoat_chat_id')  # Получаем сохранённый chat_id группы
+    # Используем group_chat_id вместо scapegoat_chat_id
+    chat_id = user_data[user_id].get('group_chat_id')
     
     # Отправляем счётчик в ЛС
     spinning_message = await bot.send_message(
@@ -173,7 +168,15 @@ async def spin_scapegoat(user_id: int, state: FSMContext):
     # Финальный результат
     scapegoat = random.choice(options)
     
-    # Обновляем сообщение в чат
+    # Обновляем сообщение в ЛС
+    await bot.edit_message_text(
+        f"✅ Крайний найден!\n\n**Сегодня в {name} побеждает {scapegoat}**",
+        user_id,
+        spinning_message.message_id,
+        parse_mode="Markdown"
+    )
+    
+    # ✅ ТОЛЬКО финальный результат отправляем в группу
     if chat_id:
         await bot.send_message(
             chat_id,
@@ -189,13 +192,7 @@ async def spin_scapegoat(user_id: int, state: FSMContext):
 async def ponos_order_start(query: types.CallbackQuery, state: FSMContext):
     """Начало порчи на понос"""
     user_id = query.from_user.id
-    chat_id = query.message.chat.id  # Сохраняем ID группы/чата
     await state.set_state(PonosOrderStates.waiting_victim)
-    
-    # Сохраняем chat_id группы
-    if user_id not in user_data:
-        user_data[user_id] = {}
-    user_data[user_id]['ponos_chat_id'] = chat_id
     
     # Отправляем в ЛС
     await bot.send_message(
@@ -245,7 +242,8 @@ async def ponos_details_received(message: types.Message, state: FSMContext):
     reason = ponos_data['reason']
     details = ponos_data['details']
     username = ponos_data['username']
-    chat_id = user_data[user_id].get('ponos_chat_id')  # Получаем сохранённый chat_id группы
+    # Используем group_chat_id вместо ponos_chat_id
+    chat_id = user_data[user_id].get('group_chat_id')
     
     # Формируем текст с @username
     username_mention = f"@{username}" if not username.startswith("@") else username
@@ -275,13 +273,7 @@ async def ponos_details_received(message: types.Message, state: FSMContext):
 async def clouds_start(query: types.CallbackQuery, state: FSMContext):
     """Начало функции дать в облака"""
     user_id = query.from_user.id
-    chat_id = query.message.chat.id  # Сохраняем ID группы/чата
     await state.set_state(CloudsStates.waiting_username)
-    
-    # Сохраняем chat_id группы
-    if user_id not in user_data:
-        user_data[user_id] = {}
-    user_data[user_id]['clouds_chat_id'] = chat_id
     
     # Отправляем в ЛС
     await bot.send_message(
@@ -295,7 +287,8 @@ async def clouds_username_received(message: types.Message, state: FSMContext):
     """Получение юзернейма и отправка в чат"""
     user_id = message.from_user.id
     username = message.text
-    chat_id = user_data[user_id].get('clouds_chat_id')  # Получаем сохранённый chat_id группы
+    # Используем group_chat_id вместо clouds_chat_id
+    chat_id = user_data[user_id].get('group_chat_id')
     
     # Выбираем случайный способ пукнуть
     fart_method = random.choice(FART_METHODS)
@@ -322,17 +315,11 @@ async def clouds_username_received(message: types.Message, state: FSMContext):
 async def polina_mode_start(query: types.CallbackQuery, state: FSMContext):
     """Начало Режима Полины"""
     user_id = query.from_user.id
-    chat_id = query.message.chat.id  # Сохраняем ID группы/чата
     await state.set_state(PolinaStates.waiting_username)
     
     # Очищаем старые данные
     if user_id in user_data:
         user_data[user_id].pop('polina', None)
-    
-    # Сохраняем chat_id группы
-    if user_id not in user_data:
-        user_data[user_id] = {}
-    user_data[user_id]['polina_chat_id'] = chat_id
     
     # Отправляем в ЛС
     await bot.send_message(
@@ -368,7 +355,8 @@ async def polina_reason_received(message: types.Message, state: FSMContext):
     polina_data = user_data[user_id]['polina']
     username = polina_data['username']
     reason = polina_data['reason']
-    chat_id = user_data[user_id].get('polina_chat_id')  # Получаем сохранённый chat_id группы
+    # Используем group_chat_id вместо polina_chat_id
+    chat_id = user_data[user_id].get('group_chat_id')
     
     # Форматируем юзернейм
     username_mention = f"{username}"
